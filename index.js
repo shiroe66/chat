@@ -13,12 +13,31 @@ app.get("/", (req, res) => {
 
 io.on("connection", (socket) => {
   socket.on("login", (data) => {
-    if (users.includes(data)) {
-      io.sockets.emit("login", { status: "FAILED" })
-    } else {
+    const found = users.find((nickname) => nickname === data)
+
+    if (!found) {
       users.push(data)
+      socket.nickname = data
       io.sockets.emit("login", { status: "OK" })
+      io.sockets.emit("users", { users })
+    } else {
+      io.sockets.emit("login", { status: "FAILED" })
     }
+  })
+
+  socket.on("message", (data) => {
+    io.sockets.emit("new message", {
+      nickname: socket.nickname,
+      message: data,
+      time: new Date().toDateString(),
+    })
+  })
+
+  socket.on("disconnect", () => {
+    const indexByUser = users.findIndex((user) => user === socket.nickname)
+    users.splice(indexByUser, 1)
+
+    io.sockets.emit("users", { users })
   })
 })
 
