@@ -12,10 +12,14 @@ app.get("/", (req, res) => {
 })
 
 io.on("connection", (socket) => {
-  console.log(socket)
-  users.push(socket)
+  socket.on("login", (data) => {
+    if (users.includes(data)) {
+      io.sockets.emit("login", { status: "FAILED" })
+    } else {
+      users.push(data)
+      io.sockets.emit("login", { status: "OK" })
+    }
+  })
 })
 
-app.listen("3000", () => {
-  console.log("work")
-})
+server.listen("3000", () => {})
